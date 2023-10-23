@@ -73,7 +73,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}'\
+                    if pline[0] == '{' and pline[-1] == '}'\
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -113,18 +113,51 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, args):
-        """ Create an object of any class"""
-        if not args:
+    def do_create(self, arg):
+        """ Create an object of any class with given parameters"""
+        if not arg:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
+
+    arg_list = arg.split(' ')
+    class_name = arg_list[0]
+
+    if class_name not in HBNBCommand.classes:
+        print("** class doesn't exist **")
+        return
+
+    # Parse parameters
+    params = {}
+    for param in arg_list[1:]:
+        try:
+            key, value = param.split('=')
+            key = key.replace('_', ' ')
+
+            # Handle string value
+            if value[0] == '"' and value[-1] == '"':
+                value = value[1:-1].replace('\\"', '"').replace('_', ' ')
+
+            # Handle float value
+            elif '.' in value and all(part.isdigit() or part[1:].isdigit()
+                                      for part in value.split('.')):
+                value = float(value)
+
+            # Handle integer value
+            elif value.isdigit() or (value[0] == '-' and value[1:].isdigit()):
+                value = int(value)
+
+            else:
+                raise ValueError("Invalid parameter value")
+
+            params[key] = value
+
+        except ValueError:
+            print(f"Invalid parameter: {param}. Skipping...")
+
+    new_instance = HBNBCommand.classes[class_name](**params)
+    storage.save()
+    print(new_instance.id)
+    storage.save()
 
     def help_create(self):
         """ Help information for the create method """
@@ -319,6 +352,7 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
+
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
