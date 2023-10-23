@@ -1,4 +1,6 @@
 <center> <h1>HBNB - The Console</h1> </center>
+This is an ALX Team Project by Lebene Gbebleou-Sleem and Veronica Gyasi. We forked the repository which contains the original codes andworked on them as direvted by the different projects. We will be focusing on hnittestimg andalso creating MySQL database and granting priviledges
+
 
 This repository contains the initial stage of a student project to build a clone of the AirBnB website. This stage implements a backend interface, or console, to manage program data. Console commands allow the user to create, update, and destroy objects, as well as manage file storage. Using a system of JSON serialization/deserialization, storage is persistent between sessions.
 
