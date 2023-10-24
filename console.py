@@ -119,45 +119,54 @@ class HBNBCommand(cmd.Cmd):
             print("** class name missing **")
             return
 
-    arg_list = arg.split(' ')
-    class_name = arg_list[0]
+        arg_list = arg.split(' ')
+        class_name = arg_list[0]
 
-    if class_name not in HBNBCommand.classes:
-        print("** class doesn't exist **")
-        return
+        if class_name not in HBNBCommand.classes:
+            print("** class doesn't exist **")
+            return
 
-    # Parse parameters
-    params = {}
-    for param in arg_list[1:]:
-        try:
-            key, value = param.split('=')
-            key = key.replace('_', ' ')
+        # Check if class_name is a valid class
+        if class_name in HBNBCommand.classes:
+            # Create a new instance of the specified class
+            new_instance = HBNBCommand.classes[class_name]()
 
-            # Handle string value
-            if value[0] == '"' and value[-1] == '"':
-                value = value[1:-1].replace('\\"', '"').replace('_', ' ')
+            # Parse and apply additional parameters
+            for param in arg_list[1:]:
+                try:
+                    key, value = param.split('=')
+                    key = key.replace('_', ' ')
 
-            # Handle float value
-            elif '.' in value and all(part.isdigit() or part[1:].isdigit()
-                                      for part in value.split('.')):
-                value = float(value)
+                    # Handle string value
+                    if value[0] == '"' and value[-1] == '"':
+                        value = (
+                                value[1:-1]
+                                .replace('\\"', '"')
+                                .replace('_', ' ')
+                                )
 
-            # Handle integer value
-            elif value.isdigit() or (value[0] == '-' and value[1:].isdigit()):
-                value = int(value)
+                    # Handle float value
+                    elif '.' in value and all(
+                            part.isdigit() or part[1:].isdigit()
+                            for part in value.split('.')
+                            ):
+                        value = float(value)
 
-            else:
-                raise ValueError("Invalid parameter value")
+                    # Handle integer value
+                    elif value.isdigit() or \
+                            (value[0] == '-' and value[1:].isdigit()):
+                        value = int(value)
 
-            params[key] = value
+                    setattr(new_instance, key, value)
 
-        except ValueError:
-            print(f"Invalid parameter: {param}. Skipping...")
+                except ValueError:
+                    print(f"Invalid parameter: {param}. Skipping...")
 
-    new_instance = HBNBCommand.classes[class_name](**params)
-    storage.save()
-    print(new_instance.id)
-    storage.save()
+            # Save the instance and print its ID
+            new_instance.save()
+            print(new_instance.id)
+        else:
+            print("** class doesn't exist **")
 
     def help_create(self):
         """ Help information for the create method """
@@ -305,7 +314,7 @@ class HBNBCommand(cmd.Cmd):
                 args.append(v)
         else:  # isolate args
             args = args[2]
-            if args and args[0] is '\"':  # check for quoted arg
+            if args and args[0] == '\"':  # check for quoted arg
                 second_quote = args.find('\"', 1)
                 att_name = args[1:second_quote]
                 args = args[second_quote + 1:]
@@ -313,10 +322,10 @@ class HBNBCommand(cmd.Cmd):
             args = args.partition(' ')
 
             # if att_name was not quoted arg
-            if not att_name and args[0] is not ' ':
+            if not att_name and args[0] != ' ':
                 att_name = args[0]
             # check for quoted val arg
-            if args[2] and args[2][0] is '\"':
+            if args[2] and args[2][0] == '\"':
                 att_val = args[2][1:args[2].find('\"', 1)]
 
             # if att_val was not quoted arg
