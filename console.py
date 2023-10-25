@@ -10,6 +10,7 @@ from models.state import State
 from models.city import City
 from models.amenity import Amenity
 from models.review import Review
+from datetime import datetime
 
 
 class HBNBCommand(cmd.Cmd):
@@ -113,60 +114,65 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, arg):
+    def do_create(self, line):
         """ Create an object of any class with given parameters"""
-        if not arg:
+        if not line:
             print("** class name missing **")
             return
 
-        arg_list = arg.split(' ')
-        class_name = arg_list[0]
+        # Splitting the command into class name and parameters
+        args_list = line.split(' ')
+        c_name = args_list[0]
 
-        if class_name not in HBNBCommand.classes:
+        # Check if the class name is valid
+        if c_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
 
-        # Check if class_name is a valid class
-        if class_name in HBNBCommand.classes:
-            # Create a new instance of the specified class
-            new_instance = HBNBCommand.classes[class_name]()
+        # Extracting parameters
+        params = {}
+        for param in args_list[1:]:
+            # Splitting each parameter into key and value
+            key, value = param.split('=')
 
-            # Parse and apply additional parameters
-            for param in arg_list[1:]:
+            # Handling value syntax
+            if value[0] == '"' and value[-1] == '"':
+                # String value
+                value = value[1:-1].replace('_', ' ').replace('\\"', '"')
+            elif '.' in value:
+                # Float value
                 try:
-                    key, value = param.split('=')
-                    key = key.replace('_', ' ')
-
-                    # Handle string value
-                    if value[0] == '"' and value[-1] == '"':
-                        value = (
-                                value[1:-1]
-                                .replace('\\"', '"')
-                                .replace('_', ' ')
-                                )
-
-                    # Handle float value
-                    elif '.' in value and all(
-                            part.isdigit() or part[1:].isdigit()
-                            for part in value.split('.')
-                            ):
-                        value = float(value)
-
-                    # Handle integer value
-                    elif value.isdigit() or \
-                            (value[0] == '-' and value[1:].isdigit()):
-                        value = int(value)
-
-                    setattr(new_instance, key, value)
-
+                    value = float(value)
                 except ValueError:
-                    print(f"Invalid parameter: {param}. Skipping...")
+                    print(f"Invalid float value for parameter {key}")
+                    continue
+            else:
+                # Integer value
+                try:
+                    value = int(value)
+                except ValueError:
+                    print(f"Invalid integer value for parameter {key}")
+                    continue
 
-            # Save the instance and print its ID
-            new_instance.save()
-            print(new_instance.id)
-        else:
-            print("** class doesn't exist **")
+            # Adding the key-value pair to the params dictionary
+            params[key] = value
+
+        # Ensure 'updated_at' is present in the params dictionary
+        if 'updated_at' not in params:
+            params['updated_at'] = datetime.utcnow()
+
+        # Convert date strings to datetime objects
+        for key, value in params.items():
+            if isinstance(value, str):
+                try:
+                    params[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+                except ValueError:
+                    pass
+        # Creating an instance of the specified class with the given parameters
+        new_instance = HBNBCommand.classes[c_name](**params)
+        storage.save()
+        print(new_instance.id)
+        storage.save()
 
     def help_create(self):
         """ Help information for the create method """
