@@ -8,7 +8,7 @@ import uuid
 from models import storage
 
 
-Base = declarative base()
+Base = declarative_base()
 
 
 class BaseModel:
