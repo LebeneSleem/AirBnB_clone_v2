@@ -163,7 +163,7 @@ class HBNBCommand(cmd.Cmd):
 
         # Convert date strings to datetime objects
         for key, value in params.items():
-            if isinstance(value, str):
+            if isinstance(value, str) and key != 'updated_at':
                 try:
                     params[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
                 except ValueError:
