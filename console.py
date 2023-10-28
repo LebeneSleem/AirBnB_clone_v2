@@ -114,62 +114,37 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, line):
-        """ Create an object of any class with given parameters"""
-        if not line:
+    def do_create(self, args):
+        """ Create an object of any class with given parameters """
+        if not args:
             print("** class name missing **")
             return
 
-        # Splitting the command into class name and parameters
-        args_list = line.split(' ')
-        c_name = args_list[0]
+        args_list = args.split()
+        class_name = args_list[0]
 
-        # Check if the class name is valid
-        if c_name not in HBNBCommand.classes:
+        if class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
 
-        # Extracting parameters
         params = {}
         for param in args_list[1:]:
-            # Splitting each parameter into key and value
-            key, value = param.split('=')
-
-            # Handling value syntax
-            if value[0] == '"' and value[-1] == '"':
-                # String value
-                value = value[1:-1].replace('_', ' ').replace('\\"', '"')
-            elif '.' in value:
-                # Float value
-                try:
+            try:
+                key, value = param.split('=')
+                key = key.replace('_', ' ')
+                if value[0] == '\"' and value[-1] == '\"':
+                    value = value[1:-1].replace('\\"', '\"')
+                elif '.' in value:
                     value = float(value)
-                except ValueError:
-                    print(f"Invalid float value for parameter {key}")
-                    continue
-            else:
-                # Integer value
-                try:
+                else:
                     value = int(value)
-                except ValueError:
-                    print(f"Invalid integer value for parameter {key}")
-                    continue
+                params[key] = value
+            except ValueError:
+                print(f"Invalid parameter: {param}. Skipping.")
 
-            # Adding the key-value pair to the params dictionary
-            params[key] = value
+        params.pop('updated_at', None)
 
-        # Ensure 'updated_at' is present in the params dictionary
-        if 'updated_at' not in params:
-            params['updated_at'] = datetime.utcnow()
-
-        # Convert date strings to datetime objects
-        for key, value in params.items():
-            if isinstance(value, str) and key != 'updated_at':
-                try:
-                    params[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
-                except ValueError:
-                    pass
-        # Creating an instance of the specified class with the given parameters
-        new_instance = HBNBCommand.classes[c_name](**params)
+        new_instance = HBNBCommand.classes[class_name](**params, updated_at=datetime.utcnow())
         storage.save()
         print(new_instance.id)
         storage.save()
